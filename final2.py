@@ -1,4 +1,7 @@
-from langchain.agents import initialize_agent, Tool
+from langchain.agents import initialize_agent, Tool, AgentType
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.prebuilt import create_react_agent
+from langchain.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
 import os
 import dotenv
@@ -16,10 +19,11 @@ if "GROQ_API_KEY" not in os.environ:
 
 # Initialiser un modèle Groq avec LangChain
 llm = ChatGroq(
-    model="llama3-8b-8192",
-    temperature=0.5,
+    model="mixtral-8x7b-32768",
+    temperature=0,
     max_tokens=1024,
 )
+
 
 # Définir une fonction pour interagir avec Groq
 def generate_test_cases(prompt):
@@ -29,7 +33,7 @@ def generate_test_cases(prompt):
     try:
         # Appel direct à l'instance LLM de Groq
         response = llm.invoke(prompt)
-        return response  # Nettoyer le texte de la réponse
+        return response.content
     except Exception as e:
         return f"Erreur lors de l'appel de l'agent : {e}"
 
@@ -38,39 +42,61 @@ tools = [
     Tool(
         name="GenerateTestCases",
         func=generate_test_cases,
-        description="Génère des cas de test basés sur des exigences."
+        description="Génère des cas de test basés sur une exigence."
     )
 ]
 
 
+# initialize conversational memory
+conversational_memory = ConversationBufferWindowMemory(
+    memory_key='chat_history',
+    k=5,
+    return_messages=True
+)
+
+memory = MemorySaver()
+
+AgentType = 'conversational-react-description'
+AgentType2 = 'zero-shot-react-description'
+AgentType3 = 'structured-chat-zero-shot-react-description'
+
 # Initialiser l'agent
 agent = initialize_agent(
+    agent=AgentType,
     tools=tools,
     llm=llm,
-    agent="zero-shot-react-description",
-    verbose=True
+    verbose=True,
+    handle_parsing_errors=True,
+    #checkpointer=memory
+    memory = conversational_memory
+
 )
 
 # Exécuter l'agent avec un prompt utilisateur
-exigences = "L'utilisateur doit pouvoir s'authentifier"
+exigences = "l'utilisateur doit pouvoir s'authentifier."
 
-prompt = f"""
-Tu es un ingénieur de test logiciel expérimenté. À partir des exigences suivantes :
+prompt = f"""Tu es un ingénieur de test logiciel expérimenté. 
+À partir de l'exigence suivante :
 {exigences}
-
 Génère une liste complète de cas de test fonctionnels en suivant ces directives :
-- Fournis une description concise mais précise de chaque cas de test.
-- Spécifie les préconditions nécessaires pour chaque test.
-- Identifie les actions principales que l'utilisateur ou le système doit effectuer.
-- Décris le résultat attendu pour valider le bon fonctionnement.
-- Évite d'inclure des scripts ou des détails techniques liés au code.
+- N'inclut pas des scripts, des exemples de code ou des détails techniques liés au développement.
+- Concentre-toi uniquement sur les descriptions fonctionnelles des tests.
+- Rédige les cas de test, sous forme de liste numérotée avec ses descriptions.
 
-Retourne les cas de test sous la forme d'une liste numérotée, rédigée en français.
+Format de l'output :
+1. **Titre du cas**  
+   Description : ...  
+   Résultat attendu : ...
+
+2. **Titre du cas**  
+   Description : ...  
+   Résultat attendu : ...
+...
 """
 
 # Exécuter l'agent
 try:
-    result = agent.invoke(prompt)
+    result = agent(prompt)
     print(result)
 except Exception as e:
     print(f"Erreur lors de l'exécution de l'agent : {e}")
