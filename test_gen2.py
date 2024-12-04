@@ -7,7 +7,7 @@ import os
 import dotenv
 
 
-## Charger les variables d'environnement
+# Charger les variables d'environnement
 dotenv.load_dotenv()
 
 # Configuration de Groq API
