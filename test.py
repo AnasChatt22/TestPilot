@@ -1,39 +1,52 @@
-import nest_asyncio
-import asyncio
-from langchain_community.agent_toolkits import PlayWrightBrowserToolkit
-from langchain_community.tools.playwright.utils import create_async_playwright_browser
+import dotenv
+from langchain.agents.agent_toolkits import PlayWrightBrowserToolkit
+from langchain.chains.conversation.memory import ConversationBufferWindowMemory
+from langchain_community.tools.playwright.utils import create_async_playwright_browser, create_sync_playwright_browser
+from langchain_groq import ChatGroq
+import os
+# Charger les variables d'environnement
+dotenv.load_dotenv()
 
-# Apply nest_asyncio to allow nested event loops in Jupyter notebooks
-nest_asyncio.apply()
+# Configuration de Groq API
+api_key = os.getenv("GROQ_API_KEY")
 
-async def main():
-    # Create an asynchronous Playwright browser instance
-    async_browser = create_async_playwright_browser()
+if "GROQ_API_KEY" not in os.environ:
+    os.environ["GROQ_API_KEY"] = api_key
+async_browser = create_async_playwright_browser()
+toolkit = PlayWrightBrowserToolkit.from_browser(async_browser=async_browser)
 
-    # Initialize the PlayWrightBrowserToolkit with the browser instance
-    toolkit = PlayWrightBrowserToolkit.from_browser(async_browser=async_browser)
+tools = toolkit.get_tools()
 
-    # Retrieve the available tools from the toolkit
-    tools = toolkit.get_tools()
-    tools_by_name = {tool.name: tool for tool in tools}
+tools_by_name = {tool.name: tool for tool in tools}
+navigate_tool = tools_by_name["navigate_browser"]
+get_elements_tool = tools_by_name["get_elements"]
 
-    # Access specific tools by their names
-    navigate_tool = tools_by_name["navigate_browser"]
-    get_elements_tool = tools_by_name["get_elements"]
+print(tools)
 
-    # Navigate to the desired URL
-    url = "https://web.archive.org/web/20230428133211"
-    navigation_result = await navigate_tool.arun({"url": url})
-    print(f"Navigation Result: {navigation_result}")
+# conversational agent memory
+memory = ConversationBufferWindowMemory(
+    memory_key='chat_history',
+    k=3,
+    return_messages=True
+)
 
-    # Extract elements using a CSS selector
-    selector = ".container__headline"
-    attributes = ["innerText"]
-    elements = await get_elements_tool.arun({"selector": selector, "attributes": attributes})
-    print(f"Extracted Elements: {elements}")
+from langchain.agents import initialize_agent
+# Set up the turbo LLM
+turbo_llm = ChatGroq(
+        model="mixtral-8x7b-32768",
+        temperature=0,
+        max_tokens=1024,
+    )
+from langchain.agents import AgentType
 
-    # Close the browser after operations are complete
-    await async_browser.close()
+# create our agent
+agent = initialize_agent(
+    agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+    tools=tools,
+    llm=turbo_llm,
+    verbose=True,
+)
 
-# Run the asynchronous main function
-asyncio.run(main())
+out = agent.run("Is there an article about Clubhouse on https://techcrunch.com/? today")
+
+print(out)
