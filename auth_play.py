@@ -24,7 +24,6 @@ toolkit = PlayWrightBrowserToolkit.from_browser(sync_browser=sync_browser)#
 
 # Extraire les outils nécessaires
 tools = toolkit.get_tools()
-prompt = hub.pull("hwchase17/openai-tools-agent")
 
 
 # ajouter une fonction qui interagit avec un llm (outil)
@@ -35,7 +34,7 @@ def main():
 
     # Initialiser un modèle Groq avec LangChain7777
     llm = ChatGroq(
-        model="llama3-70b-8192",
+        model="llama-3.2-90b-vision-preview",
         temperature=0,
         max_tokens=1024,
     )
@@ -62,7 +61,11 @@ def main():
 
     # Utiliser l'agent pour extraire le prix
     prompt = (
-        f"Tu doit essayer de s'authentifier sur le site : {url} avec cet email {email} et ce mot de passe {password}."
+        f"Tu es un ingénieur de test, et je veux que tu essaye de s'authentifier sur le site : {url}, avec un email et ce mot de passe aleatoire."
+        f"Affiche moi au final le resulat sous la forme :"
+        f"1- email utilisé :"
+        f"2- mot de passe :"
+        f"3- résultat de la connexion :"
     )
 
     try:
