@@ -18,11 +18,13 @@ if "GROQ_API_KEY" not in os.environ:
     os.environ["GROQ_API_KEY"] = api_key
 
 # Initialiser le navigateur asynchrone
-sync_browser = create_sync_playwright_browser() # changement de sync
-toolkit = PlayWrightBrowserToolkit.from_browser(sync_browser=sync_browser)#
+sync_browser = create_sync_playwright_browser()
+toolkit = PlayWrightBrowserToolkit.from_browser(sync_browser=sync_browser)
+
 
 # Extraire les outils nécessaires
 tools = toolkit.get_tools()
+print(tools)
 
 # ajouter une fonction qui interagit avec un llm (outil)
 
@@ -30,9 +32,9 @@ tools = toolkit.get_tools()
 def main():
 
 
-    # Initialiser un modèle Groq avec LangChain7777
+    # Initialiser un modèle Groq avec LangChain
     llm = ChatGroq(
-        model="mixtral-8x7b-32768",
+        model="llama-3.3-70b-versatile",
         temperature=0,
         max_tokens=1024,
     )
@@ -49,23 +51,38 @@ def main():
         agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
         handle_parsing_errors=True,
-        memory = conversational_memory
+        memory=conversational_memory
     )
 
     # URL, Nom du produit
-    url = "https://electre.kereval.cloud/opencart/index.php?route=product/category&language=en-gb&path=24"
-    product_name = "Palm Treo Pro"
+    url = "https://www.opencart.com/index.php?route=common/home"
+    product_name = "iStore Theme"
+    product_name_1 = "iStore Theme"
+    product_name_2 = "PDF Invoice Pro"
 
+    prompt_getPrice = (
+        f"Trouve le prix du produit '{product_name}' à partir de la plateforme eCommerce : {url}. "
+        "Récupère uniquement le texte contenant le prix et renvoie uniquement le montant."
+    )
 
-    prompt = (
-        f"Tu doit extraire le prix du produit {product_name} dans le lien : {url}."
+    prompt_checkPrice = (
+        f"Vérifie si le prix du produit '{product_name}' est égal à 34.99 dans la plateforme eCommerce : {url}. "
+        "Si le produit coûte 30 euros, confirme que le prix est correct. Sinon, indique le prix actuel du produit."
+    )
+
+    prompt_comparePrices = (
+        f"Compare le prix du produit '{product_name_1}' avec celui du produit '{product_name_2}' dans la plateforme eCommerce : {url}."
+        "Indique lequel des deux est le moins cher et donne les prix de chacun."
     )
 
     try:
-        result = agent.run(prompt)
-        print(result)
+        result = agent.run(prompt_getPrice)
+        print(f"Résultat : {result}")
+    except ValueError as e:
+        print(f"Erreur de valeur : {e}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Une erreur imprévue est survenue : {e}")
+
 
 # Lancer le programme
 if __name__ == "__main__":

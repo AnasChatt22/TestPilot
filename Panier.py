@@ -16,6 +16,12 @@ api_key = os.getenv("GROQ_API_KEY")
 tavily_api_key = os.getenv("TAVILY_API_KEY")  # Clé API pour Tavily
 client = Groq(api_key=api_key)
 
+llm = ChatGroq(
+        model="mixtral-8x7b-32768",
+        temperature=0,
+        max_tokens=1024,
+    )
+
 # Définir l'outil pour l'agent (ajout de TavilySearchResults)
 def generate_test_cases_with_agent(prompt):
     try:
@@ -41,9 +47,9 @@ def generate_test_cases_with_agent(prompt):
 
         agent = initialize_agent(
             tools,
-            llm=ChatGroq(api_key=api_key),
+            llm=llm,
             agent_type="zero-shot-react-description",  # Type d'agent que vous utilisez
-            verbose=False,  # Désactive l'affichage dans le terminal
+            verbose=True,  # Désactive l'affichage dans le terminal
             handle_parsing_errors=True  # Gérer les erreurs de parsing
         )
 
