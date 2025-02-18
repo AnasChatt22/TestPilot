@@ -24,9 +24,7 @@ toolkit = PlayWrightBrowserToolkit.from_browser(sync_browser=sync_browser)
 
 # Extraire les outils nécessaires
 tools = toolkit.get_tools()
-print(tools)
 
-# ajouter une fonction qui interagit avec un llm (outil)
 
 
 def main():
@@ -35,8 +33,7 @@ def main():
     # Initialiser un modèle Groq avec LangChain
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
-        temperature=0,
-        max_tokens=1024,
+        temperature=0
     )
     # initialize conversational memory
     conversational_memory = ConversationBufferWindowMemory(
@@ -57,21 +54,21 @@ def main():
     # URL, Nom du produit
     url = "https://www.opencart.com/index.php?route=common/home"
     product_name = "iStore Theme"
-    product_name_1 = "iStore Theme"
     product_name_2 = "PDF Invoice Pro"
+    price = "30.99"
 
     prompt_getPrice = (
         f"Trouve le prix du produit '{product_name}' à partir de la plateforme eCommerce : {url}. "
-        "Récupère uniquement le texte contenant le prix et renvoie uniquement le montant."
+        "Retourne uniquement le prix sous format numérique."
     )
 
     prompt_checkPrice = (
-        f"Vérifie si le prix du produit '{product_name}' est égal à 34.99 dans la plateforme eCommerce : {url}. "
-        "Si le produit coûte 30 euros, confirme que le prix est correct. Sinon, indique le prix actuel du produit."
+        f"Vérifie si le prix du produit '{product_name}' est égal à {price} dans la plateforme eCommerce : {url}."
+        f"Si le produit coûte {price}, indique CORRECT, Sinon, indique INCORRECT."
     )
 
     prompt_comparePrices = (
-        f"Compare le prix du produit '{product_name_1}' avec celui du produit '{product_name_2}' dans la plateforme eCommerce : {url}."
+        f"Compare le prix du produit '{product_name}' avec celui du produit '{product_name_2}' dans la plateforme eCommerce : {url}."
         "Indique lequel des deux est le moins cher et donne les prix de chacun."
     )
 
