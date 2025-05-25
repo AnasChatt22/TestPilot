@@ -35,8 +35,7 @@ def main():
     # Initialiser un modèle Groq avec LangChain
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
-        temperature=0,
-        max_tokens=1024,
+        temperature=0.3
     )
     # initialize conversational memory
     conversational_memory = ConversationBufferWindowMemory(
@@ -50,13 +49,12 @@ def main():
         llm=llm,
         agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
-        handle_parsing_errors=True,
-        memory=conversational_memory
+        handle_parsing_errors=True
     )
 
     # URL, Nom du produit
     url = "https://www.opencart.com/index.php?route=common/home"
-    product_name = "iStore Theme"
+    product_name = "Featured Categories"
     product_name_1 = "iStore Theme"
     product_name_2 = "PDF Invoice Pro"
 
@@ -76,7 +74,7 @@ def main():
     )
 
     try:
-        result = agent.run(prompt_getPrice)
+        result = agent.invoke({"input": prompt_getPrice})
         print(f"Résultat : {result}")
     except ValueError as e:
         print(f"Erreur de valeur : {e}")
